@@ -1,16 +1,13 @@
-import path from "path";
-import fs from "fs";
+import { kv } from "@vercel/kv";
 
-const dataPath = path.join(process.cwd(), "data", "players.json");
+const KEY = "penalty_store";
 
-function readStore() {
-  if (!fs.existsSync(dataPath)) return { testLabels: [], players: [] };
-  return JSON.parse(fs.readFileSync(dataPath, "utf8"));
+async function readStore() {
+  return (await kv.get(KEY)) ?? { testLabels: [], players: [] };
 }
 
-function writeStore(data) {
-  fs.mkdirSync(path.dirname(dataPath), { recursive: true });
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+async function writeStore(data) {
+  await kv.set(KEY, data);
 }
 
 function recalc(player) {
@@ -28,33 +25,33 @@ function recalc(player) {
   };
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "GET") {
-    return res.status(200).json(readStore());
+    return res.status(200).json(await readStore());
   }
 
   if (req.method === "POST") {
-    const store = readStore();
+    const store = await readStore();
     const { name } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: "Name required" });
     const cleanName = name.trim().toUpperCase();
     if (store.players.find((p) => p.name === cleanName))
       return res.status(400).json({ error: "Player already exists" });
     store.players.push(recalc({ name: cleanName, results: Array(store.testLabels.length).fill(null) }));
-    writeStore(store);
+    await writeStore(store);
     return res.status(200).json(store);
   }
 
   if (req.method === "DELETE") {
-    const store = readStore();
+    const store = await readStore();
     const { name } = req.body;
     store.players = store.players.filter((p) => p.name !== name);
-    writeStore(store);
+    await writeStore(store);
     return res.status(200).json(store);
   }
 
   if (req.method === "PATCH") {
-    const store = readStore();
+    const store = await readStore();
     const { name, index, value } = req.body;
     store.players = store.players.map((p) => {
       if (p.name !== name) return p;
@@ -62,7 +59,7 @@ export default function handler(req, res) {
       results[index] = value;
       return recalc({ ...p, results });
     });
-    writeStore(store);
+    await writeStore(store);
     return res.status(200).json(store);
   }
 

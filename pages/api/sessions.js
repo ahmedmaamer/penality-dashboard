@@ -1,16 +1,13 @@
-import path from "path";
-import fs from "fs";
+import { kv } from "@vercel/kv";
 
-const dataPath = path.join(process.cwd(), "data", "players.json");
+const KEY = "penalty_store";
 
-function readStore() {
-  if (!fs.existsSync(dataPath)) return { testLabels: [], players: [] };
-  return JSON.parse(fs.readFileSync(dataPath, "utf8"));
+async function readStore() {
+  return (await kv.get(KEY)) ?? { testLabels: [], players: [] };
 }
 
-function writeStore(data) {
-  fs.mkdirSync(path.dirname(dataPath), { recursive: true });
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+async function writeStore(data) {
+  await kv.set(KEY, data);
 }
 
 function recalc(player) {
@@ -28,27 +25,27 @@ function recalc(player) {
   };
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "POST") {
-    const store = readStore();
+    const store = await readStore();
     const newLabel = `T${store.testLabels.length + 1}`;
     store.testLabels.push(newLabel);
     store.players = store.players.map((p) =>
       recalc({ ...p, results: [...p.results, null] })
     );
-    writeStore(store);
+    await writeStore(store);
     return res.status(200).json(store);
   }
 
   if (req.method === "DELETE") {
-    const store = readStore();
+    const store = await readStore();
     if (store.testLabels.length === 0)
       return res.status(400).json({ error: "No sessions to remove" });
     store.testLabels.pop();
     store.players = store.players.map((p) =>
       recalc({ ...p, results: p.results.slice(0, -1) })
     );
-    writeStore(store);
+    await writeStore(store);
     return res.status(200).json(store);
   }
 
