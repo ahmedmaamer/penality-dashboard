@@ -1,13 +1,18 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.Srorage_KV_REST_API_URL,
+  token: process.env.Srorage_KV_REST_API_TOKEN,
+});
 
 const KEY = "penalty_store";
 
 async function readStore() {
-  return (await kv.get(KEY)) ?? { testLabels: [], players: [] };
+  return (await redis.get(KEY)) ?? { testLabels: [], players: [] };
 }
 
 async function writeStore(data) {
-  await kv.set(KEY, data);
+  await redis.set(KEY, data);
 }
 
 function recalc(player) {
