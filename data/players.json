@@ -1,0 +1,60 @@
+{
+  "testLabels": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "players": [
+    {
+      "name": "AHMED",
+      "results": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "scored": 6,
+      "missed": 0,
+      "total": 6,
+      "pctScored": 100,
+      "pctMissed": 0
+    },
+    {
+      "name": "ANIS",
+      "results": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "scored": 1,
+      "missed": 5,
+      "total": 6,
+      "pctScored": 17,
+      "pctMissed": 83
+    },
+    {
+      "name": "MOHAMED",
+      "results": [
+        1,
+        0,
+        0,
+        1,
+        null,
+        null
+      ],
+      "scored": 2,
+      "missed": 2,
+      "total": 4,
+      "pctScored": 50,
+      "pctMissed": 50
+    }
+  ]
+}

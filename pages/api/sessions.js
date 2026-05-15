@@ -29,39 +29,25 @@ function recalc(player) {
 }
 
 export default function handler(req, res) {
-  if (req.method === "GET") {
-    return res.status(200).json(readStore());
-  }
-
   if (req.method === "POST") {
     const store = readStore();
-    const { name } = req.body;
-    if (!name?.trim()) return res.status(400).json({ error: "Name required" });
-    const cleanName = name.trim().toUpperCase();
-    if (store.players.find((p) => p.name === cleanName))
-      return res.status(400).json({ error: "Player already exists" });
-    store.players.push(recalc({ name: cleanName, results: Array(store.testLabels.length).fill(null) }));
+    const newLabel = `T${store.testLabels.length + 1}`;
+    store.testLabels.push(newLabel);
+    store.players = store.players.map((p) =>
+      recalc({ ...p, results: [...p.results, null] })
+    );
     writeStore(store);
     return res.status(200).json(store);
   }
 
   if (req.method === "DELETE") {
     const store = readStore();
-    const { name } = req.body;
-    store.players = store.players.filter((p) => p.name !== name);
-    writeStore(store);
-    return res.status(200).json(store);
-  }
-
-  if (req.method === "PATCH") {
-    const store = readStore();
-    const { name, index, value } = req.body;
-    store.players = store.players.map((p) => {
-      if (p.name !== name) return p;
-      const results = [...p.results];
-      results[index] = value;
-      return recalc({ ...p, results });
-    });
+    if (store.testLabels.length === 0)
+      return res.status(400).json({ error: "No sessions to remove" });
+    store.testLabels.pop();
+    store.players = store.players.map((p) =>
+      recalc({ ...p, results: p.results.slice(0, -1) })
+    );
     writeStore(store);
     return res.status(200).json(store);
   }
